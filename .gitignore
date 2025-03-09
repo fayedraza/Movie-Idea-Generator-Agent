@@ -86,3 +86,7 @@ jspm_packages/
 dist/
 build/
 *.egg-info/ 
+
+#cursor
+.cursorignore
+
