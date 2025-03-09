@@ -1,0 +1,88 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+.env
+.python-version
+.env.local
+.env.*.local
+
+# IDE - Cursor
+.cursor/
+.cursor-server/
+.cursor.json
+*.cursor-log
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# IDE - PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# IDE - General
+*.swp
+*.swo
+*~
+
+# Environment and Config files
+**/config/config.yaml
+.env
+.env.local
+.env.*.local
+
+# Logs and databases
+*.log
+*.sqlite
+logs/
+*.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+recommender_api/src/config/config.yaml
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Distribution / packaging
+.Python
+dist/
+build/
+*.egg-info/ 

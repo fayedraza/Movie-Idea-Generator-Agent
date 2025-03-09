@@ -1,0 +1,36 @@
+{
+    "movies": [
+        {
+            "name": "The Shawshank Redemption",
+            "description": "A tale of hope and friendship in a prison setting",
+            "genres": ["Drama", "Crime"]
+        },
+        {
+            "name": "Inception",
+            "description": "A thief who enters people's dreams to steal secrets",
+            "genres": ["Science Fiction", "Action", "Thriller"]
+        },
+        {
+            "name": "The Lord of the Rings",
+            "description": "Epic fantasy adventure about a quest to destroy a powerful ring",
+            "genres": ["Fantasy", "Adventure", "Action"]
+        }
+    ],
+    "books": [
+        {
+            "name": "1984",
+            "description": "A dystopian novel about totalitarian surveillance society",
+            "genres": ["Science Fiction", "Dystopian", "Political Fiction"]
+        },
+        {
+            "name": "Pride and Prejudice",
+            "description": "A romantic novel about relationships and social class",
+            "genres": ["Romance", "Classic", "Literary Fiction"]
+        },
+        {
+            "name": "The Hobbit",
+            "description": "A fantasy novel about a hobbit's journey to reclaim a treasure",
+            "genres": ["Fantasy", "Adventure", "Children's Literature"]
+        }
+    ]
+} 
