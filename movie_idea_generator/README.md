@@ -10,29 +10,58 @@ This application uses a team of AI agents to generate unique movie ideas:
 2. **Recommendation Agent**: Finds movie and book recommendations based on the identified genres
 3. **Idea Generator Agent**: Creates a unique movie concept by blending elements from the recommendations
 
-## Flow
-
-The application follows this flow:
-1. User provides a prompt with movie preferences
-2. Genre Analyzer identifies relevant genres from the prompt
-3. Recommendation Agent suggests a movie and book that match these genres
-4. Idea Generator creates a unique movie concept by combining elements from the recommendations
-
 ## Installation
 
-1. Clone this repository
-2. Install the required dependencies:
+### Method 1: Using pip
+
+1. **Navigate to the project directory**:
+   ```bash
+   cd movie_idea_generator
    ```
-   pip install -r requirements.txt
+
+2. **Install dependencies**:
+   ```bash
+   pip install -e .
    ```
 
-## Usage
+### Method 2: Using pipenv
 
-Run the application from the project root directory:
+1. **Navigate to the project directory**:
+   ```bash
+   cd movie_idea_generator
+   ```
 
+2. **Install dependencies**:
+   ```bash
+   pipenv install
+   ```
+
+3. **Activate the virtual environment**:
+   ```bash
+   pipenv shell
+   ```
+
+## Running the Application
+
+There are two easy ways to run the application:
+
+### Option 1: Using the run script
+
+From the project root directory:
+
+```bash
+python movie_idea_generator/run.py
 ```
+
+### Option 2: As a module
+
+From the project root directory:
+
+```bash
 python -m movie_idea_generator.src.main
 ```
+
+## Usage
 
 When prompted, enter your movie idea preferences. For example:
 - "I want a sci-fi thriller with time travel elements"
@@ -50,6 +79,17 @@ The generated movie idea will include:
 - Target genres
 - Key themes and elements
 - Influences from the recommended movie and book
+
+## API Integration
+
+By default, the application uses a placeholder API. To connect it to the local Recommender API:
+
+1. Update the `RECOMMENDER_API_URL` in `src/config/config.py`:
+   ```python
+   RECOMMENDER_API_URL = "http://localhost:8081"
+   ```
+
+2. Make sure the Recommender API is running (see the root README for instructions).
 
 ## Requirements
 
