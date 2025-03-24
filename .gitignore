@@ -26,16 +26,22 @@ MANIFEST
 venv/
 env/
 ENV/
-.env
 .python-version
+
+# Sensitive files and environment variables
+.env
 .env.local
 .env.*.local
+**/secrets.py
+movie_idea_generator/src/config/secrets.py
+movie_idea_generator/.env
 
 # IDE - Cursor
 .cursor/
 .cursor-server/
 .cursor.json
 *.cursor-log
+.cursorignore
 
 # IDE - VSCode
 .vscode/
@@ -55,9 +61,7 @@ ENV/
 
 # Environment and Config files
 **/config/config.yaml
-.env
-.env.local
-.env.*.local
+recommender_api/src/config/config.yaml
 
 # Logs and databases
 *.log
@@ -74,19 +78,7 @@ logs/
 ehthumbs.db
 Thumbs.db
 
-# Project specific
-recommender_api/src/config/config.yaml
-
 # Dependency directories
 node_modules/
 jspm_packages/
-
-# Distribution / packaging
-.Python
-dist/
-build/
-*.egg-info/ 
-
-#cursor
-.cursorignore
 

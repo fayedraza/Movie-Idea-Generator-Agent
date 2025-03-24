@@ -1,7 +1,9 @@
 from crewai import Crew, Task
-from movie_idea_generator.src.agents.idea_generator_agent import IdeaGeneratorAgent
-from movie_idea_generator.src.agents.genre_analyzer_agent import GenreAnalyzerAgent
-from movie_idea_generator.src.agents.recommendation_agent import RecommendationAgent
+# Import environment variables first to ensure API keys are loaded
+from src.config.env import check_api_keys
+from src.agents.idea_generator_agent import IdeaGeneratorAgent
+from src.agents.genre_analyzer_agent import GenreAnalyzerAgent
+from src.agents.recommendation_agent import RecommendationAgent
 
 def generate_movie_idea(user_prompt):
     # Create agents
@@ -45,6 +47,9 @@ def generate_movie_idea(user_prompt):
 def main():
     """Entry point for the movie idea generator."""
     try:
+        # Check API keys before running
+        check_api_keys()
+        
         user_prompt = input("Please enter your movie idea preferences: ")
         result = generate_movie_idea(user_prompt)
         print("\nGenerated Movie Idea:")
