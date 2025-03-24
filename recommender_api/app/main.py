@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Literal
+from typing import List
 import json
 import os
 from sklearn.feature_extraction.text import CountVectorizer
@@ -17,8 +17,13 @@ with open(data_path, 'r') as f:
     data = json.load(f)
 
 class RecommendationRequest(BaseModel):
-    type: Literal["movies", "books"]
+    type: str
     genres: List[str]
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.type not in ["movies", "books"]:
+            raise ValueError(f"'type' must be one of: movies, books")
 
 class RecommendationResponse(BaseModel):
     name: str
