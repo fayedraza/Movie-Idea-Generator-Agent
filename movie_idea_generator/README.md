@@ -80,6 +80,65 @@ The generated movie idea will include:
 - Key themes and elements
 - Influences from the recommended movie and book
 
+## Testing
+
+The project includes comprehensive unit and integration tests. To run the tests:
+
+### Prerequisites
+
+Install the testing dependencies:
+
+```bash
+pip install pytest pytest-cov
+```
+
+### Running Tests
+
+#### Using pytest directly
+
+From the project root directory:
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+pytest --cov=src tests/
+
+# Run specific test categories
+pytest tests/unit/
+pytest tests/integration/
+```
+
+#### Using the test runner script
+
+For convenience, you can use the provided test runner script:
+
+```bash
+# Make sure the script is executable
+chmod +x run_tests.sh
+
+# Run all tests
+./run_tests.sh
+
+# Run with coverage
+./run_tests.sh --cov
+
+# Generate HTML coverage report
+./run_tests.sh --cov --html
+
+# Run only unit tests
+./run_tests.sh --unit
+
+# Run only integration tests
+./run_tests.sh --integration
+
+# Run a specific test file
+./run_tests.sh tests/unit/test_main.py
+```
+
+For detailed information about the test suite, see [tests/README.md](tests/README.md).
+
 ## API Integration
 
 By default, the application uses a placeholder API. To connect it to the local Recommender API:

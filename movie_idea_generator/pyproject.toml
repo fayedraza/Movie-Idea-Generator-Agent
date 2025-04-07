@@ -1,23 +1,36 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=42.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "movie_idea_generator"
 version = "0.1.0"
-description = "A CrewAI-powered application that generates creative movie ideas"
-authors = [
-    {name = "Movie Ideas Team", email = "example@example.com"}
-]
+description = "CrewAI-powered movie idea generator"
+readme = "README.md"
 requires-python = ">=3.8"
+license = { text = "MIT" }
+
 dependencies = [
-    "crewai>=0.28.0",
-    "requests>=2.31.0",
+    "crewai",
+    "langchain", 
+    "requests",
+    "python-dotenv"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+python_classes = "Test*"
+addopts = "--cov=src"
+filterwarnings = [
+    "ignore::DeprecationWarning"
 ]
 
 [tool.setuptools]

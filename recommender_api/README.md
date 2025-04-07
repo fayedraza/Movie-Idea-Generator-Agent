@@ -70,6 +70,67 @@ To use a different port:
 uvicorn app.main:app --reload --port <YOUR_PORT>
 ```
 
+## Testing
+
+The project includes comprehensive unit and integration tests for the API. To run the tests:
+
+### Prerequisites
+
+Install the testing dependencies:
+
+```bash
+pip install pytest pytest-cov httpx
+```
+
+Note: `httpx` is required for FastAPI's TestClient.
+
+### Running Tests
+
+#### Using pytest directly
+
+From the project root directory:
+
+```bash
+# Run all tests
+pytest
+
+# Run tests with coverage report
+pytest --cov=app tests/
+
+# Run specific test categories
+pytest tests/unit/
+pytest tests/integration/
+```
+
+#### Using the test runner script
+
+For convenience, you can use the provided test runner script:
+
+```bash
+# Make sure the script is executable
+chmod +x run_tests.sh
+
+# Run all tests
+./run_tests.sh
+
+# Run with coverage
+./run_tests.sh --cov
+
+# Generate HTML coverage report
+./run_tests.sh --cov --html
+
+# Run only unit tests
+./run_tests.sh --unit
+
+# Run only integration tests
+./run_tests.sh --integration
+
+# Run a specific test file
+./run_tests.sh tests/unit/test_api.py
+```
+
+For detailed information about the test suite, see [tests/README.md](tests/README.md).
+
 ## API Documentation
 
 After starting the server, access the documentation at:
