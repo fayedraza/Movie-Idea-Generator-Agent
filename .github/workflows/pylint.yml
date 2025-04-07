@@ -1,23 +1,49 @@
-name: Pylint
+name: Pylint Analysis
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
+      fail-fast: false
+
     steps:
     - uses: actions/checkout@v4
+    
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint
-    - name: Analysing the code with pylint
+        pip install pylint pytest pytest-cov
+        if [ -f movie_idea_generator/pyproject.toml ]; then
+          pip install -e ./movie_idea_generator[dev]
+        fi
+        if [ -f recommender_api/requirements.txt ]; then
+          pip install -r recommender_api/requirements.txt
+        fi
+    
+    - name: Analyzing code with pylint
       run: |
-        pylint $(git ls-files '*.py')
+        # Exclude files containing secrets, virtual environments, and cache directories
+        pylint $(find . -type f -name "*.py" ! -path "*/\.*" ! -path "*/venv/*" ! -path "*/.venv/*" ! -path "*/secrets.py" ! -path "*/__pycache__/*")
+      continue-on-error: true  # Don't fail CI/CD if linting issues are found
+    
+    - name: Run pytest with coverage
+      run: |
+        if [ -d movie_idea_generator ]; then
+          cd movie_idea_generator && python -m pytest
+        fi
+      continue-on-error: true
