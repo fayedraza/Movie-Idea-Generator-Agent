@@ -8,6 +8,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+# Get the directory of the script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # Check if pytest is installed
 if ! command -v pytest &> /dev/null; then
     echo -e "${RED}Error: pytest is not installed. Please install it first:${NC}"
@@ -48,6 +51,9 @@ done
 echo -e "${YELLOW}Running tests for Movie Idea Generator${NC}"
 echo -e "${YELLOW}------------------------------------${NC}"
 
+# Make sure we're in the right directory
+cd "$SCRIPT_DIR"
+
 # Build the pytest command
 cmd="pytest -v"
 
@@ -68,9 +74,11 @@ echo -e "${YELLOW}Running command: ${cmd}${NC}"
 $cmd
 
 # Check the exit status
-if [ $? -eq 0 ]; then
+status=$?
+if [ $status -eq 0 ]; then
     echo -e "${GREEN}All tests passed!${NC}"
+    exit 0
 else
     echo -e "${RED}Some tests failed.${NC}"
-    exit 1
+    exit $status
 fi 

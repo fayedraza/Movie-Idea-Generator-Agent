@@ -8,42 +8,138 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  lint-and-test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-      fail-fast: false
+    # No matrix strategy - only running on Python 3.10
 
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.10"
         cache: 'pip'
     
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint pytest pytest-cov
+        pip install pylint pytest pytest-cov pytest-html bc ansi2html
+        # Install main package in development mode to ensure proper module imports
         if [ -f movie_idea_generator/pyproject.toml ]; then
           pip install -e ./movie_idea_generator[dev]
         fi
         if [ -f recommender_api/requirements.txt ]; then
           pip install -r recommender_api/requirements.txt
         fi
+        # Install any additional requirements
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
     
     - name: Analyzing code with pylint
       run: |
-        # Exclude files containing secrets, virtual environments, and cache directories
-        pylint $(find . -type f -name "*.py" ! -path "*/\.*" ! -path "*/venv/*" ! -path "*/.venv/*" ! -path "*/secrets.py" ! -path "*/__pycache__/*")
-      continue-on-error: true  # Don't fail CI/CD if linting issues are found
-    
-    - name: Run pytest with coverage
-      run: |
-        if [ -d movie_idea_generator ]; then
-          cd movie_idea_generator && python -m pytest
+        # Set minimum score threshold (1.0/10)
+        THRESHOLD=1.0
+        
+        # Set absolute minimum score threshold (1.0/10) - code will fail CI if below this score
+        CRITICAL_THRESHOLD=1.0
+        
+        # Create a report file directory
+        mkdir -p pylint_reports
+        
+        echo "::group::Finding Python files to analyze"
+        # Find Python files to analyze, excluding sensitive and cache directories
+        FILES_TO_CHECK=$(find . -type f -name "*.py" ! -path "*/\.*" ! -path "*/venv/*" ! -path "*/.venv/*" ! -path "*/secrets.py" ! -path "*/__pycache__/*")
+        echo "Files to check:"
+        echo "$FILES_TO_CHECK"
+        echo "::endgroup::"
+        
+        echo "::group::Running pylint analysis"
+        # Run pylint with colorized output and capture exit code
+        pylint --output-format=colorized $FILES_TO_CHECK > pylint_reports/pylint_colorized.txt 2>&1 || true
+        PYLINT_EXIT_CODE=$?
+        
+        # Also create a plain text version
+        pylint --output-format=text $FILES_TO_CHECK > pylint_reports/pylint_report.txt 2>&1 || true
+
+        # Convert colorized output to HTML for better viewing in artifacts
+        cat pylint_reports/pylint_colorized.txt | ansi2html > pylint_reports/pylint_report.html || true
+        echo "::endgroup::"
+        
+        echo "::group::Pylint Results Summary"
+        # Display summary information
+        echo "----------------------------------------"
+        echo "🔍 PYLINT ANALYSIS RESULTS SUMMARY"
+        echo "----------------------------------------"
+        
+        # Extract score from pylint output
+        SCORE=$(grep -oP "Your code has been rated at \K[0-9.]+" pylint_reports/pylint_report.txt || echo "")
+        
+        # Get counts of different issue types
+        ERROR_COUNT=$(grep -c "E:" pylint_reports/pylint_report.txt || echo "0")
+        WARNING_COUNT=$(grep -c "W:" pylint_reports/pylint_report.txt || echo "0")
+        CONVENTION_COUNT=$(grep -c "C:" pylint_reports/pylint_report.txt || echo "0")
+        REFACTOR_COUNT=$(grep -c "R:" pylint_reports/pylint_report.txt || echo "0")
+        
+        # Show summary
+        echo "Pylint exit code: $PYLINT_EXIT_CODE"
+        if [ -n "$SCORE" ]; then
+          echo "📊 Score: $SCORE/10.0"
+        else
+          echo "❌ Score: Not available (pylint might have failed)"
         fi
-      continue-on-error: true
+        
+        echo "📋 Issue counts:"
+        echo "  - Errors (E): $ERROR_COUNT"
+        echo "  - Warnings (W): $WARNING_COUNT"
+        echo "  - Conventions (C): $CONVENTION_COUNT"
+        echo "  - Refactor suggestions (R): $REFACTOR_COUNT"
+        echo "----------------------------------------"
+        echo "::endgroup::"
+        
+        echo "::group::Top Issues (if any)"
+        # Show the top issues from each category
+        if [ "$ERROR_COUNT" -gt "0" ]; then
+          echo "🚨 TOP ERRORS:"
+          grep "E:" pylint_reports/pylint_report.txt | head -n 5
+          echo ""
+        fi
+        
+        if [ "$WARNING_COUNT" -gt "0" ]; then
+          echo "⚠️ TOP WARNINGS:"
+          grep "W:" pylint_reports/pylint_report.txt | head -n 5
+          echo ""
+        fi
+        
+        if [ "$CONVENTION_COUNT" -gt "0" ]; then
+          echo "📝 TOP CONVENTION ISSUES:"
+          grep "C:" pylint_reports/pylint_report.txt | head -n 5
+          echo ""
+        fi
+        echo "::endgroup::"
+        
+        # Check if score exists and if it's below critical threshold
+        if [ -z "$SCORE" ]; then
+          echo "❌ Failed to extract pylint score. Pylint might have failed."
+          echo "Check the full output in the artifacts."
+          exit 1
+        fi
+        
+        # Check if the score is below threshold (must-fix)
+        if (( $(echo "$SCORE < $THRESHOLD" | bc -l) )); then
+          echo "::error::❌ CRITICAL: Pylint score $SCORE is below the threshold of $THRESHOLD"
+          echo "::error::This code has critical quality issues that MUST be fixed before merging."
+          exit 1
+        else
+          echo "✅ Pylint score $SCORE meets or exceeds threshold $THRESHOLD"
+        fi
+
+    - name: Archive test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: |
+          **/test_results/**/*
+          pylint_reports/*
+      if: always()
