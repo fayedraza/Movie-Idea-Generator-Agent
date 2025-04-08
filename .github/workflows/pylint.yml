@@ -47,20 +47,60 @@ jobs:
         
         # Run pylint and capture the output and score
         # Exclude files containing secrets, virtual environments, and cache directories
-        PYLINT_OUTPUT=$(pylint --output-format=text $(find . -type f -name "*.py" ! -path "*/\.*" ! -path "*/venv/*" ! -path "*/.venv/*" ! -path "*/secrets.py" ! -path "*/__pycache__/*") 2>&1)
+        echo "Running pylint analysis on Python files..."
+        FILES_TO_CHECK=$(find . -type f -name "*.py" ! -path "*/\.*" ! -path "*/venv/*" ! -path "*/.venv/*" ! -path "*/secrets.py" ! -path "*/__pycache__/*")
+        
+        # Display what files will be checked
+        echo "Checking the following files:"
+        echo "$FILES_TO_CHECK"
+        
+        # Run pylint on the files
+        PYLINT_OUTPUT=$(pylint --output-format=text $FILES_TO_CHECK 2>&1)
+        PYLINT_EXIT_CODE=$?
+        
+        # Save the output to a report file
         echo "$PYLINT_OUTPUT" > pylint_reports/pylint_report.txt
         
         # Extract score from pylint output
         SCORE=$(echo "$PYLINT_OUTPUT" | grep -oP "Your code has been rated at \K[0-9.]+")
         
+        # Display pylint output for debugging
+        echo "Pylint output:"
+        echo "$PYLINT_OUTPUT"
+        
+        # Interpret pylint exit code
+        echo "Pylint exit code: $PYLINT_EXIT_CODE"
+        case $PYLINT_EXIT_CODE in
+          0)
+            echo "Pylint completed successfully with no issues."
+            ;;
+          4)
+            echo "Pylint found fatal errors in your code (syntax errors, etc.)."
+            exit 1
+            ;;
+          8)
+            echo "Pylint found errors in your code (likely bugs, API misuse, etc.)."
+            exit 1
+            ;;
+          16)
+            echo "Pylint found warnings in your code (stylistic issues, minor problems)."
+            ;;
+          32)
+            echo "Pylint found convention issues in your code (coding standards violations)."
+            ;;
+          *)
+            echo "Pylint exited with code $PYLINT_EXIT_CODE"
+            ;;
+        esac
+        
         if [ -z "$SCORE" ]; then
           echo "Failed to extract pylint score. Pylint might have failed."
-          echo "$PYLINT_OUTPUT"
           exit 1
         fi
         
         if (( $(echo "$SCORE < $THRESHOLD" | bc -l) )); then
           echo "Pylint score $SCORE is below threshold $THRESHOLD"
+          echo "Please fix the issues reported by pylint (see logs or artifacts)."
           exit 1
         else
           echo "Pylint score $SCORE meets or exceeds threshold $THRESHOLD"
