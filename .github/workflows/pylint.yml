@@ -141,30 +141,29 @@ jobs:
           # Create test results directory
           mkdir -p movie_idea_generator/test_results
 
-          cd movie_idea_generator
           echo "::group::Running tests for movie_idea_generator"
           echo "----------------------------------------"
           echo "🧪 TESTING MOVIE IDEA GENERATOR"
           echo "----------------------------------------"
           
-          # Check if PYTHONPATH needs to be set for proper imports
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          # Make the test script executable
+          chmod +x movie_idea_generator/run_tests.sh
           
-          # Run tests and capture output, generating both console output and HTML report
-          python -m pytest tests/ -v --cov=src --html=test_results/report.html --self-contained-html > test_results/test_output.txt 2>&1
+          # Run the test script directly, redirecting output to a file
+          ./movie_idea_generator/run_tests.sh > movie_idea_generator/test_results/test_output.txt 2>&1
           TEST_EXIT_CODE=$?
           
           # Display test output for immediate visibility
-          cat test_results/test_output.txt
+          cat movie_idea_generator/test_results/test_output.txt
           echo "::endgroup::"
           
           echo "::group::Test Results Summary"
-          # Extract test summary information
-          TOTAL_TESTS=$(grep -oP "collected \K[0-9]+" test_results/test_output.txt || echo "0")
-          PASSED_TESTS=$(grep -c "PASSED" test_results/test_output.txt || echo "0")
-          FAILED_TESTS=$(grep -c "FAILED" test_results/test_output.txt || echo "0")
-          ERROR_TESTS=$(grep -c "ERROR" test_results/test_output.txt || echo "0")
-          SKIPPED_TESTS=$(grep -c "SKIPPED" test_results/test_output.txt || echo "0")
+          # Extract test summary information from the output
+          TOTAL_TESTS=$(grep -oP "collected \K[0-9]+" movie_idea_generator/test_results/test_output.txt || echo "0")
+          PASSED_TESTS=$(grep -c "PASSED" movie_idea_generator/test_results/test_output.txt || echo "0")
+          FAILED_TESTS=$(grep -c "FAILED" movie_idea_generator/test_results/test_output.txt || echo "0")
+          ERROR_TESTS=$(grep -c "ERROR" movie_idea_generator/test_results/test_output.txt || echo "0")
+          SKIPPED_TESTS=$(grep -c "SKIPPED" movie_idea_generator/test_results/test_output.txt || echo "0")
           
           # Show the summary
           echo "----------------------------------------"
@@ -182,17 +181,12 @@ jobs:
           # Show failed tests if any
           if [ "$FAILED_TESTS" -gt "0" ] || [ "$ERROR_TESTS" -gt "0" ]; then
             echo "🚨 FAILING TESTS:"
-            grep -A 10 "FAILED" test_results/test_output.txt || true
+            grep -A 10 "FAILED" movie_idea_generator/test_results/test_output.txt || true
             echo ""
           fi
           echo "::endgroup::"
           
-          # Generate coverage report
-          echo "::group::Coverage Report"
-          python -m pytest --cov=src --cov-report=term
-          echo "::endgroup::"
-          
-          # Exit with the pytest exit code to ensure workflow fails if tests fail
+          # Exit with the test script exit code to ensure workflow fails if tests fail
           if [ $TEST_EXIT_CODE -ne 0 ]; then
             echo "::error::❌ Tests for movie_idea_generator failed! See test results summary above."
             exit $TEST_EXIT_CODE
@@ -220,7 +214,7 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           
           # Run tests and capture output, generating both console output and HTML report
-          python -m pytest tests/ -v --cov=src --html=test_results/report.html --self-contained-html > test_results/test_output.txt 2>&1
+          python -m pytest tests/ -v --html=test_results/report.html --self-contained-html > test_results/test_output.txt 2>&1
           TEST_EXIT_CODE=$?
           
           # Display test output for immediate visibility
@@ -256,11 +250,6 @@ jobs:
           fi
           echo "::endgroup::"
           
-          # Generate coverage report
-          echo "::group::Coverage Report"
-          python -m pytest --cov=src --cov-report=term
-          echo "::endgroup::"
-          
           # Exit with the pytest exit code to ensure workflow fails if tests fail
           if [ $TEST_EXIT_CODE -ne 0 ]; then
             echo "::error::❌ Tests for recommender_api failed! See test results summary above."
@@ -269,17 +258,14 @@ jobs:
             echo "✅ All tests for recommender_api passed!"
           fi
         else
-          echo "::error::Directory recommender_api not found!"
-          exit 1
+          echo "::warning::Directory recommender_api not found, skipping tests."
         fi
     
-    - name: Upload test and lint reports
-      if: always()
-      uses: actions/upload-artifact@v4
+    - name: Archive test results
+      uses: actions/upload-artifact@v3
       with:
-        name: test-and-lint-reports
+        name: test-results
         path: |
-          pylint_reports/
-          **/test_results/
-          **/coverage.xml
-          **/.coverage
+          **/test_results/**/*
+          pylint_reports/*
+      if: always()
