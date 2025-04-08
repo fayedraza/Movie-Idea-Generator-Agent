@@ -1,43 +1,37 @@
+"""Integration tests for the movie idea workflow."""
+
+import os
 import pytest
 from unittest.mock import patch, MagicMock
-import os
-import sys
-from pathlib import Path
+
 from src.main import generate_movie_idea
 
 
 class TestMovieIdeaWorkflow:
+    """Test the end-to-end movie idea generation workflow."""
     
-    @patch('src.agents.recommendation_agent.RecommendationTool._run')
-    @patch('src.config.llm.create_chat_completion')
-    def test_end_to_end_workflow(self, mock_chat_completion, mock_recommendation_tool_run):
-        """Test the full workflow with mocked external dependencies"""
-        # Set up OpenAI API mock responses
-        mock_chat_completion.return_value = "Mocked OpenAI response for testing"
+    def test_end_to_end_workflow(self):
+        """Test the entire workflow from prompt to final output."""
+        # We don't need to mock create_chat_completion here since it's already mocked in conftest.py
         
-        # Set up the recommendation tool mock response
-        mock_recommendation_tool_run.return_value = {
-            "movie": {
-                "name": "Test Movie",
-                "description": "Test movie description",
-                "genres": ["Action", "Adventure"]
-            },
-            "book": {
-                "name": "Test Book",
-                "description": "Test book description",
-                "genres": ["Fantasy", "Adventure"]
-            }
-        }
+        # Run the workflow
+        result = generate_movie_idea("A sci-fi movie about communication between species")
         
-        # Run the workflow with a test prompt
-        result = generate_movie_idea("Test prompt with action and adventure elements")
+        # Verify the result contains all expected sections
+        assert result is not None
+        assert "user_prompt" in result
+        assert "genres" in result
+        assert "recommendations" in result
+        assert "movie_idea" in result
         
-        # Verify that the chat completion was called at least once
-        assert mock_chat_completion.called
+        # Check that genres list is populated
+        assert isinstance(result["genres"], list)
+        assert len(result["genres"]) > 0
         
-        # Verify that the recommendation tool was called
-        mock_recommendation_tool_run.assert_called_once()
+        # Check recommendations
+        assert "movie" in result["recommendations"]
+        assert "book" in result["recommendations"]
         
-        # The result should be a string (the final movie idea)
-        assert isinstance(result, str)
-        assert len(result) > 0 
+        # Check movie idea is a string
+        assert isinstance(result["movie_idea"], str)
+        assert len(result["movie_idea"]) > 0 

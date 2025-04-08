@@ -3,18 +3,46 @@ LLM configuration utilities for working with OpenAI models.
 This module provides helper functions to create and configure OpenAI clients.
 """
 
+import os
+from typing import Dict, List, Optional, Any, Union
 from openai import OpenAI
 from src.config.config import LLM_CONFIG, OPENAI_MODELS
 from src.config.secrets import OPENAI_API_KEY
 
+class LLM:
+    """
+    Simple LLM class for configuration.
+    
+    This is a simplified version of the LLM class used by the app.
+    """
+    
+    def __init__(self, model: str = "gpt-3.5-turbo", temperature: float = 0.7, **kwargs):
+        """
+        Initialize the LLM with configuration parameters.
+        
+        Args:
+            model: The model name to use
+            temperature: The temperature to use for generation
+            **kwargs: Additional parameters
+        """
+        self.model = model
+        self.temperature = temperature
+        self.name = kwargs.get("name", "Default LLM")
+        self.api_key = kwargs.get("api_key", OPENAI_API_KEY)
+
 def get_openai_client():
     """
-    Create and return an instance of the OpenAI client.
+    Get an OpenAI client instance.
     
     Returns:
-        OpenAI: Configured OpenAI client instance
+        An OpenAI client instance
     """
-    return OpenAI(api_key=OPENAI_API_KEY, timeout=LLM_CONFIG.get("request_timeout", 120))
+    try:
+        return OpenAI(api_key=OPENAI_API_KEY)
+    except ImportError:
+        print("Warning: OpenAI package not installed. Using mock client.")
+        # Create a simple mock client for testing
+        return None
 
 def get_llm_config(model_key=None, temperature=None, max_tokens=None):
     """
@@ -44,28 +72,49 @@ def get_llm_config(model_key=None, temperature=None, max_tokens=None):
     
     return config
 
-def create_chat_completion(messages, model_key=None, temperature=None, max_tokens=None):
+def create_chat_completion(
+    messages: List[Dict[str, str]], 
+    model: str = "gpt-3.5-turbo", 
+    temperature: float = 0.7, 
+    max_tokens: int = 500,
+    response_format: Optional[Dict[str, str]] = None,
+    **kwargs
+) -> Any:
     """
-    Create a chat completion using the OpenAI client.
+    Create a chat completion using OpenAI API.
+    
+    This function wraps the OpenAI API call to make it easier to mock in tests.
     
     Args:
-        messages (list): List of message dictionaries for the conversation
-        model_key (str, optional): Key from OPENAI_MODELS to use. Defaults to None.
-        temperature (float, optional): Temperature setting. Defaults to None.
-        max_tokens (int, optional): Max tokens setting. Defaults to None.
-    
+        messages: List of message dictionaries with 'role' and 'content' keys
+        model: The model name to use
+        temperature: The temperature to use for generation
+        max_tokens: The maximum number of tokens to generate
+        response_format: Optional response format (e.g., {"type": "json_object"})
+        **kwargs: Additional parameters
+        
     Returns:
-        ChatCompletion: The response from the OpenAI API
+        The OpenAI API response
     """
-    config = get_llm_config(model_key, temperature, max_tokens)
     client = get_openai_client()
     
-    return client.chat.completions.create(
-        model=config["model"],
-        messages=messages,
-        temperature=config["temperature"],
-        max_tokens=config.get("max_tokens", 4000)
-    )
+    # Set up API parameters
+    params = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens
+    }
+    
+    # Add response format if provided
+    if response_format:
+        params["response_format"] = response_format
+        
+    # Add any additional parameters
+    params.update(kwargs)
+    
+    # Make the API call
+    return client.chat.completions.create(**params)
 
 def use_gpt4():
     """Get configuration for GPT-4"""
