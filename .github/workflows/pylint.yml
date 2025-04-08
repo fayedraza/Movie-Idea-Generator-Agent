@@ -10,6 +10,7 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    # No matrix strategy - only running on Python 3.10
 
     steps:
     - uses: actions/checkout@v4
@@ -23,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint pytest pytest-cov
+        pip install pylint pytest pytest-cov bc
         # Install main package in development mode to ensure proper module imports
         if [ -f movie_idea_generator/pyproject.toml ]; then
           pip install -e ./movie_idea_generator[dev]
@@ -52,6 +53,12 @@ jobs:
         # Extract score from pylint output
         SCORE=$(echo "$PYLINT_OUTPUT" | grep -oP "Your code has been rated at \K[0-9.]+")
         
+        if [ -z "$SCORE" ]; then
+          echo "Failed to extract pylint score. Pylint might have failed."
+          echo "$PYLINT_OUTPUT"
+          exit 1
+        fi
+        
         if (( $(echo "$SCORE < $THRESHOLD" | bc -l) )); then
           echo "Pylint score $SCORE is below threshold $THRESHOLD"
           exit 1
@@ -60,29 +67,33 @@ jobs:
         fi
     
     - name: Run tests for movie_idea_generator
-      if: ${{ always() }}  # Run even if pylint step fails
       run: |
         if [ -d movie_idea_generator ]; then
           cd movie_idea_generator
           # Check if PYTHONPATH needs to be set for proper imports
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           # Run tests with coverage and fail if tests fail
-          python -m pytest tests/ -v --cov=src || exit 1
+          python -m pytest tests/ -v --cov=src
+        else
+          echo "Directory movie_idea_generator not found!"
+          exit 1
         fi
     
     - name: Run tests for recommender_api
-      if: ${{ always() }}  # Run even if previous steps fail
       run: |
         if [ -d recommender_api ]; then
           cd recommender_api
           # Check if PYTHONPATH needs to be set for proper imports
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           # Run tests with coverage and fail if tests fail
-          python -m pytest tests/ -v --cov=src || exit 1
+          python -m pytest tests/ -v --cov=src
+        else
+          echo "Directory recommender_api not found!"
+          exit 1
         fi
     
     - name: Upload test and lint reports
-      if: ${{ always() }}
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: test-and-lint-reports
