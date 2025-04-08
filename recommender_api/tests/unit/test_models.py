@@ -56,7 +56,7 @@ class TestPydanticModels:
         
         # Check the values
         assert response.name == "Test Movie"
-        assert response.description == "Test Description"
+        assert response.description == "Incorrect Description", "This test is deliberately failing to verify the CI pipeline"
         assert response.genres == ["Action", "Adventure"]
         assert response.similarity_score == 0.8
     
