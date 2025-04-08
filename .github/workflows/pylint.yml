@@ -39,10 +39,8 @@ jobs:
     
     - name: Analyzing code with pylint
       run: |
-        # Set minimum score threshold (3.0/10)
-        THRESHOLD=3.0
-        # Set target score threshold (8.0/10)
-        TARGET=8.0
+        # Set minimum score threshold (8.0/10)
+        THRESHOLD=8.0
         
         # Create a report file directory
         mkdir -p pylint_reports
@@ -126,14 +124,11 @@ jobs:
         fi
         
         if (( $(echo "$SCORE < $THRESHOLD" | bc -l) )); then
-          echo "::error::❌ Pylint score $SCORE is below minimum threshold $THRESHOLD"
-          echo "::error::Please fix the critical issues reported by pylint (see summary above and artifacts for details)."
+          echo "::error::❌ Pylint score $SCORE is below threshold $THRESHOLD"
+          echo "::error::Please fix the issues reported by pylint (see summary above and artifacts for details)."
           exit 1
-        elif (( $(echo "$SCORE < $TARGET" | bc -l) )); then
-          echo "⚠️ Pylint score $SCORE meets minimum threshold but is below target $TARGET"
-          echo "Consider fixing more issues to improve code quality."
         else
-          echo "✅ Pylint score $SCORE meets or exceeds target threshold $TARGET"
+          echo "✅ Pylint score $SCORE meets or exceeds threshold $THRESHOLD"
         fi
     
     - name: Run tests for movie_idea_generator
