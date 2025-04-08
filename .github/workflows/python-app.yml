@@ -8,32 +8,107 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:  # Allow manual triggering
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+    
     - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: "3.10"
+        cache: 'pip'
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install flake8 pytest pytest-cov pytest-html
+        
+        # Install movie_idea_generator dependencies
+        if [ -d "movie_idea_generator" ]; then
+          pip install -e "./movie_idea_generator[dev]"
+          pip install openai requests python-dotenv crewai langchain
+        fi
+        
+        # Install recommender_api dependencies
+        if [ -d "recommender_api" ]; then
+          pip install fastapi uvicorn scikit-learn numpy httpx
+        fi
+        
+        # Install any additional requirements
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+    
+    - name: Create test directories
+      run: |
+        mkdir -p test_results/movie_idea_generator
+        mkdir -p test_results/recommender_api
+    
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
+    
+    - name: Test movie_idea_generator
+      if: always() && hashFiles('movie_idea_generator/**/*.py') != ''
       run: |
-        pytest
+        echo "::group::Running tests for movie_idea_generator"
+        cd movie_idea_generator
+        
+        # Create dummy secrets file for testing if needed
+        mkdir -p src/config
+        echo "OPENAI_API_KEY = 'dummy_key_for_testing'" > src/config/secrets.py
+        
+        # Run tests with coverage and generate report
+        python -m pytest tests/ -v --cov=src --html=../test_results/movie_idea_generator/report.html --self-contained-html | tee ../test_results/movie_idea_generator/test_output.txt
+        
+        # Store the exit code to determine if tests passed
+        TEST_EXIT_CODE=${PIPESTATUS[0]}
+        
+        # Display summary
+        echo "----------------------------------------"
+        echo "📊 Test Results Summary:"
+        grep -E "collected|PASSED|FAILED|ERROR" ../test_results/movie_idea_generator/test_output.txt || true
+        echo "----------------------------------------"
+        
+        # Exit with the test exit code
+        exit $TEST_EXIT_CODE
+    
+    - name: Test recommender_api
+      if: always() && hashFiles('recommender_api/**/*.py') != ''
+      run: |
+        echo "::group::Running tests for recommender_api"
+        cd recommender_api
+        
+        # Run tests with coverage and generate report
+        python -m pytest tests/ -v --cov=app --html=../test_results/recommender_api/report.html --self-contained-html | tee ../test_results/recommender_api/test_output.txt
+        
+        # Store the exit code to determine if tests passed
+        TEST_EXIT_CODE=${PIPESTATUS[0]}
+        
+        # Display summary
+        echo "----------------------------------------"
+        echo "📊 Test Results Summary:"
+        grep -E "collected|PASSED|FAILED|ERROR" ../test_results/recommender_api/test_output.txt || true
+        echo "----------------------------------------"
+        
+        # Exit with the test exit code
+        exit $TEST_EXIT_CODE
+    
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          test_results/
