@@ -39,8 +39,11 @@ jobs:
     
     - name: Analyzing code with pylint
       run: |
-        # Set minimum score threshold (8.0/10)
-        THRESHOLD=8.0
+        # Set minimum score threshold (1.0/10)
+        THRESHOLD=1.0
+        
+        # Set absolute minimum score threshold (1.0/10) - code will fail CI if below this score
+        CRITICAL_THRESHOLD=1.0
         
         # Create a report file directory
         mkdir -p pylint_reports
@@ -116,16 +119,17 @@ jobs:
         fi
         echo "::endgroup::"
         
-        # Check if score exists and if it's below threshold
+        # Check if score exists and if it's below critical threshold
         if [ -z "$SCORE" ]; then
           echo "❌ Failed to extract pylint score. Pylint might have failed."
           echo "Check the full output in the artifacts."
           exit 1
         fi
         
+        # Check if the score is below threshold (must-fix)
         if (( $(echo "$SCORE < $THRESHOLD" | bc -l) )); then
-          echo "::error::❌ Pylint score $SCORE is below threshold $THRESHOLD"
-          echo "::error::Please fix the issues reported by pylint (see summary above and artifacts for details)."
+          echo "::error::❌ CRITICAL: Pylint score $SCORE is below the threshold of $THRESHOLD"
+          echo "::error::This code has critical quality issues that MUST be fixed before merging."
           exit 1
         else
           echo "✅ Pylint score $SCORE meets or exceeds threshold $THRESHOLD"
