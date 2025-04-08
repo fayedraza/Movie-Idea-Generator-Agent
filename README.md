@@ -164,3 +164,46 @@ The Movie Idea Generator can use the Recommender API service to get movie and bo
 
 1. Start the Recommender API service on port 8081
 2. Update the `RECOMMENDER_API_URL` in `movie_idea_generator/src/config/config.py` 
+
+## Code Quality Tools
+
+This project uses several tools to maintain code quality:
+
+### Linting and Formatting
+
+- **Pylint**: We enforce a minimum pylint score of 3.0/10 and target a score of 8.0/10.
+- **Black**: For consistent code formatting
+- **isort**: For organizing imports
+- **Ruff**: For additional linting and automatic fixes
+
+### Utility Scripts
+
+Several utility scripts are available to help maintain code quality:
+
+- `format_and_fix.sh`: Runs all formatting tools (black, isort, ruff) and creates necessary files
+- `format_and_check.sh`: Runs the formatter and then checks pylint score, failing if below 3.0
+- `advanced_fixes.py`: Performs more complex code quality improvements:
+  - Fixes import errors
+  - Extracts duplicated code to utility functions
+  - Splits long lines into multiple lines
+  - Replaces broad exception handling with specific exceptions
+  - Fixes protected access warnings
+  - Fixes unused arguments
+  - Adds pylint disable comments where appropriate
+
+### Running the Quality Tools
+
+```bash
+# Run all formatters and then check pylint score
+./format_and_check.sh
+
+# Apply advanced fixes and then run formatters and check
+./run_advanced_fixes.sh
+```
+
+### CI/CD
+
+The project includes a GitHub Actions workflow that runs pylint and tests. The workflow will:
+- Fail if the pylint score is below 3.0/10
+- Warn if the pylint score is below 8.0/10
+- Run all tests and report results 

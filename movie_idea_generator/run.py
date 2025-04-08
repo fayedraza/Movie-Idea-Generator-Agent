@@ -7,4 +7,4 @@ Run this script from the project root directory.
 from src.main import main
 
 if __name__ == "__main__":
-    main() 
+    main()

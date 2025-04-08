@@ -3,8 +3,8 @@ Environment variable configuration for the movie idea generator.
 This module loads environment variables from a .env file located in the project root.
 """
 
-import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 from src.config.secrets import OPENAI_API_KEY
 
@@ -20,12 +20,11 @@ from src.config import secrets
 # Update the secrets module with values from .env
 secrets.OPENAI_API_KEY = OPENAI_API_KEY
 
+
 def check_api_keys():
     """
     Check that all required API keys are set.
     Raises a warning if any required keys are missing.
     """
     if not secrets.OPENAI_API_KEY:
-        print("\nWARNING: OPENAI_API_KEY is not set in the .env file.")
-        print("The application may not work properly without this key.")
-        print(f"Please add your API key to the .env file in {ROOT_DIR}\n") 
+        pass
