@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint pytest pytest-cov bc ansi2html
+        pip install pylint pytest pytest-cov pytest-html bc ansi2html
         # Install main package in development mode to ensure proper module imports
         if [ -f movie_idea_generator/pyproject.toml ]; then
           pip install -e ./movie_idea_generator[dev]
@@ -134,26 +134,138 @@ jobs:
     - name: Run tests for movie_idea_generator
       run: |
         if [ -d movie_idea_generator ]; then
+          # Create test results directory
+          mkdir -p movie_idea_generator/test_results
+
           cd movie_idea_generator
+          echo "::group::Running tests for movie_idea_generator"
+          echo "----------------------------------------"
+          echo "🧪 TESTING MOVIE IDEA GENERATOR"
+          echo "----------------------------------------"
+          
           # Check if PYTHONPATH needs to be set for proper imports
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          # Run tests with coverage and fail if tests fail
-          python -m pytest tests/ -v --cov=src
+          
+          # Run tests and capture output, generating both console output and HTML report
+          python -m pytest tests/ -v --cov=src --html=test_results/report.html --self-contained-html > test_results/test_output.txt 2>&1
+          TEST_EXIT_CODE=$?
+          
+          # Display test output for immediate visibility
+          cat test_results/test_output.txt
+          echo "::endgroup::"
+          
+          echo "::group::Test Results Summary"
+          # Extract test summary information
+          TOTAL_TESTS=$(grep -oP "collected \K[0-9]+" test_results/test_output.txt || echo "0")
+          PASSED_TESTS=$(grep -c "PASSED" test_results/test_output.txt || echo "0")
+          FAILED_TESTS=$(grep -c "FAILED" test_results/test_output.txt || echo "0")
+          ERROR_TESTS=$(grep -c "ERROR" test_results/test_output.txt || echo "0")
+          SKIPPED_TESTS=$(grep -c "SKIPPED" test_results/test_output.txt || echo "0")
+          
+          # Show the summary
+          echo "----------------------------------------"
+          echo "🧪 TEST RESULTS SUMMARY"
+          echo "----------------------------------------"
+          echo "📊 Test Statistics:"
+          echo "  - Total Tests: $TOTAL_TESTS"
+          echo "  - Passed: $PASSED_TESTS"
+          echo "  - Failed: $FAILED_TESTS"
+          echo "  - Errors: $ERROR_TESTS"
+          echo "  - Skipped: $SKIPPED_TESTS"
+          echo "  - Exit Code: $TEST_EXIT_CODE"
+          echo "----------------------------------------"
+          
+          # Show failed tests if any
+          if [ "$FAILED_TESTS" -gt "0" ] || [ "$ERROR_TESTS" -gt "0" ]; then
+            echo "🚨 FAILING TESTS:"
+            grep -A 10 "FAILED" test_results/test_output.txt || true
+            echo ""
+          fi
+          echo "::endgroup::"
+          
+          # Generate coverage report
+          echo "::group::Coverage Report"
+          python -m pytest --cov=src --cov-report=term
+          echo "::endgroup::"
+          
+          # Exit with the pytest exit code to ensure workflow fails if tests fail
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::error::❌ Tests for movie_idea_generator failed! See test results summary above."
+            exit $TEST_EXIT_CODE
+          else
+            echo "✅ All tests for movie_idea_generator passed!"
+          fi
         else
-          echo "Directory movie_idea_generator not found!"
+          echo "::error::Directory movie_idea_generator not found!"
           exit 1
         fi
     
     - name: Run tests for recommender_api
       run: |
         if [ -d recommender_api ]; then
+          # Create test results directory
+          mkdir -p recommender_api/test_results
+
           cd recommender_api
+          echo "::group::Running tests for recommender_api"
+          echo "----------------------------------------"
+          echo "🧪 TESTING RECOMMENDER API"
+          echo "----------------------------------------"
+          
           # Check if PYTHONPATH needs to be set for proper imports
           export PYTHONPATH=$PYTHONPATH:$(pwd)
-          # Run tests with coverage and fail if tests fail
-          python -m pytest tests/ -v --cov=src
+          
+          # Run tests and capture output, generating both console output and HTML report
+          python -m pytest tests/ -v --cov=src --html=test_results/report.html --self-contained-html > test_results/test_output.txt 2>&1
+          TEST_EXIT_CODE=$?
+          
+          # Display test output for immediate visibility
+          cat test_results/test_output.txt
+          echo "::endgroup::"
+          
+          echo "::group::Test Results Summary"
+          # Extract test summary information
+          TOTAL_TESTS=$(grep -oP "collected \K[0-9]+" test_results/test_output.txt || echo "0")
+          PASSED_TESTS=$(grep -c "PASSED" test_results/test_output.txt || echo "0")
+          FAILED_TESTS=$(grep -c "FAILED" test_results/test_output.txt || echo "0")
+          ERROR_TESTS=$(grep -c "ERROR" test_results/test_output.txt || echo "0")
+          SKIPPED_TESTS=$(grep -c "SKIPPED" test_results/test_output.txt || echo "0")
+          
+          # Show the summary
+          echo "----------------------------------------"
+          echo "🧪 TEST RESULTS SUMMARY"
+          echo "----------------------------------------"
+          echo "📊 Test Statistics:"
+          echo "  - Total Tests: $TOTAL_TESTS"
+          echo "  - Passed: $PASSED_TESTS"
+          echo "  - Failed: $FAILED_TESTS"
+          echo "  - Errors: $ERROR_TESTS"
+          echo "  - Skipped: $SKIPPED_TESTS"
+          echo "  - Exit Code: $TEST_EXIT_CODE"
+          echo "----------------------------------------"
+          
+          # Show failed tests if any
+          if [ "$FAILED_TESTS" -gt "0" ] || [ "$ERROR_TESTS" -gt "0" ]; then
+            echo "🚨 FAILING TESTS:"
+            grep -A 10 "FAILED" test_results/test_output.txt || true
+            echo ""
+          fi
+          echo "::endgroup::"
+          
+          # Generate coverage report
+          echo "::group::Coverage Report"
+          python -m pytest --cov=src --cov-report=term
+          echo "::endgroup::"
+          
+          # Exit with the pytest exit code to ensure workflow fails if tests fail
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::error::❌ Tests for recommender_api failed! See test results summary above."
+            exit $TEST_EXIT_CODE
+          else
+            echo "✅ All tests for recommender_api passed!"
+          fi
         else
-          echo "Directory recommender_api not found!"
+          echo "::error::Directory recommender_api not found!"
           exit 1
         fi
     
@@ -164,5 +276,6 @@ jobs:
         name: test-and-lint-reports
         path: |
           pylint_reports/
+          **/test_results/
           **/coverage.xml
           **/.coverage
